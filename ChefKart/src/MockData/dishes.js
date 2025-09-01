@@ -1,4 +1,3 @@
-// Mock data for dishes
 export const dishes = [
     {
       id: '1',

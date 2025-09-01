@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, memo } from 'react';
 import { dishes as mockDishes, categories } from '../../MockData/dishes';
+import DishItem from '../../components/DishItem/DishItem';
 import {
   View,
   Text,
@@ -17,6 +18,21 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+
+const categoryToMealType = {
+  'Main Course': 'MAIN COURSE',
+  'Starter': 'STARTER',
+  'Dessert': 'DESSERT',
+  'Sides': 'SIDES'
+};
+
+const getMealTypeCategory = (mealType) => ({
+  'STARTER': 'Starter',
+  'MAIN COURSE': 'Main Course',
+  'DESSERT': 'Dessert',
+  'SIDES': 'Sides'
+}[mealType]);
+
 const FoodOrderingScreen = () => {
   const [activeCategory, setActiveCategory] = useState('Starter');
   const [northIndianExpanded, setNorthIndianExpanded] = useState(true);
@@ -27,100 +43,22 @@ const FoodOrderingScreen = () => {
 
   const navigation = useNavigation();
 
-  const handleIngredientPress = (dish) => {
+  // Navigate to ingredient details screen with dish information
+  const handleIngredientPress = useCallback((dish) => {
     navigation.navigate('IngredientDetails', {
       ingredient: {
         name: dish.name || 'Ingredient',
         description: 'Fresh and high-quality ingredient for your dish.',
         price: Math.floor(Math.random() * 100) + 50,
         image: dish.image,
-        type: dish.type || 'veg',
+        type: dish.type || 'veg', 
         shelfLife: '3-4 days',
         storage: 'Refrigerate'
       }
     });
-  };
+  }, [navigation]);
 
-  const DishItem = memo(({ dish, isSelected, onToggle }) => {
-    const [expanded, setExpanded] = useState(false);
-    const maxLength = 60;
-    const shouldTruncate = dish.description.length > maxLength;
-    const displayText = expanded
-      ? dish.description
-      : `${dish.description.substring(0, maxLength)}${shouldTruncate ? '...' : ''}`;
 
-    return (
-      <View style={styles.dishCard}>
-        <View style={styles.dishInfo}>
-          <View style={styles.dishHeader}>
-            <Text style={styles.dishName}>{dish.name}</Text>
-            <View style={[
-              styles.ingredientsIcon,
-              { borderColor: dish.type === 'veg' ? '#539A64' : '#E2574C' }
-            ]}>
-              <View style={[
-                styles.ingredientsIconEllipse,
-                { backgroundColor: dish.type === 'veg' ? '#539A64' : '#E2574C' }
-              ]} />
-            </View>
-
-            <View style={{ flex: 1 }} />
-          </View>
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.dishDescription}>
-              {displayText}
-              {shouldTruncate && !expanded && (
-                <Text
-                  style={styles.readMoreText}
-                  onPress={() => setExpanded(true)}
-                >
-                  {' '}Read More
-                </Text>
-              )}
-            </Text>
-            {shouldTruncate && expanded && (
-              <Text
-                style={[styles.readMoreText, styles.readMoreRight]}
-                onPress={() => setExpanded(false)}
-              >
-                Show Less
-              </Text>
-            )}
-          </View>
-          <TouchableOpacity
-            style={styles.ingredientsHeader}
-            onPress={() => handleIngredientPress(dish)}
-          >
-            <Icon
-              name="spa"
-              size={16}
-              color="#FF8800"
-              style={styles.ingredientIcon}
-            />
-            <Text style={styles.ingredientsText}>Ingredients</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.dishImageContainer}>
-          <Image
-            source={{ uri: dish.image }}
-            style={styles.dishImage}
-            resizeMode="cover"
-          />
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => onToggle(dish.id)}
-          >
-            <View style={styles.addButtonContent}>
-              <Text style={styles.addButtonText}>
-                {isSelected ? 'Remove' : 'Add'}
-              </Text>
-              {!isSelected && <Text style={styles.plusIcon}> +</Text>}
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  });
   const categoryToMealType = {
     'Main Course': 'MAIN COURSE',
     'Starter': 'STARTER',
@@ -128,60 +66,61 @@ const FoodOrderingScreen = () => {
     'Sides': 'SIDES'
   };
 
+  // Filter dishes based on active filters and search query
   const filteredDishes = useMemo(() => {
-    let result = [...mockDishes];
+    let result = mockDishes;
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    // Convert active category to meal type format if not 'All'
+    const mealType = activeCategory !== 'All' ? categoryToMealType[activeCategory] : null;
 
-    if (vegFilter && !nonVegFilter) {
-      result = result.filter(dish => dish.type === 'veg');
-    } else if (!vegFilter && nonVegFilter) {
-      result = result.filter(dish => dish.type !== 'veg');
-    } else if (!vegFilter && !nonVegFilter) {
-      setVegFilter(true);
-      setNonVegFilter(true);
-    }
-    if (activeCategory !== 'All') {
-      const mealType = categoryToMealType[activeCategory];
-      if (mealType) {
-        result = result.filter(dish => dish.mealType === mealType);
-      }
-    }
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(dish =>
-        dish.name.toLowerCase().includes(query)
-      );
+    // Return all dishes if no filters are active
+    if (vegFilter && nonVegFilter && !trimmedQuery && !mealType) {
+      return result;
     }
 
-    return result;
-  }, [activeCategory, mockDishes, categoryToMealType, searchQuery, vegFilter, nonVegFilter]);
-
-  const categoryCounts = useMemo(() => {
-    const counts = {};
-
-    categories.forEach(category => {
-      counts[category.name] = 0;
+    // Apply all active filters in a single pass
+    result = mockDishes.filter(dish => {
+      // Show only veg dishes if non-veg filter is off
+      if (vegFilter && !nonVegFilter && dish.type !== 'veg') return false;
+      // Show only non-veg dishes if veg filter is off
+      if (!vegFilter && nonVegFilter && dish.type === 'veg') return false;
+      
+      // Filter by selected meal category
+      if (mealType && dish.mealType !== mealType) return false;
+      
+      // Filter by search term in dish name
+      if (trimmedQuery && !dish.name.toLowerCase().includes(trimmedQuery)) return false;
+      
+      return true; // Include dish if it passes all filters
     });
 
-    Object.entries(selectedDishes).forEach(([dishId, count]) => {
+    return result;
+  }, [activeCategory, mockDishes, searchQuery, vegFilter, nonVegFilter]);
+
+  // Count selected dishes by category for the category tabs
+  const categoryCounts = useMemo(() => {
+    // Initialize counts for all categories to 0
+    const counts = categories.reduce((acc, category) => ({
+      ...acc,
+      [category.name]: 0
+    }), {});
+
+    // Count selected dishes in each category
+    return Object.entries(selectedDishes).reduce((acc, [dishId, count]) => {
       if (count > 0) {
         const dish = mockDishes.find(d => d.id === dishId);
         if (dish) {
-          const categoryName = {
-            'STARTER': 'Starter',
-            'MAIN COURSE': 'Main Course',
-            'DESSERT': 'Dessert',
-            'SIDES': 'Sides'
-          }[dish.mealType];
-
+          // Get the display name of the meal type
+          const categoryName = getMealTypeCategory(dish.mealType);
           if (categoryName) {
-            counts[categoryName] = (counts[categoryName] || 0) + count;
+            // Increment count for this category
+            acc[categoryName] = (acc[categoryName] || 0) + count;
           }
         }
       }
-    });
-
-    return counts;
-  }, [selectedDishes]);
+      return acc;
+    }, { ...counts }); // Start with initialized counts
+  }, [selectedDishes, mockDishes, categories]);
 
   const toggleDishSelection = useCallback((dishId) => {
     setSelectedDishes(prev => ({
@@ -315,6 +254,7 @@ const FoodOrderingScreen = () => {
                   dish={dish}
                   isSelected={!!selectedDishes[dish.id]}
                   onToggle={toggleDishSelection}
+                  onIngredientPress={handleIngredientPress}
                 />
               )}
               initialNumToRender={5}
@@ -479,7 +419,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 0,
     borderRadius: 20,
-    borderWidth: 0.0000002, 
+    borderWidth: 0.0000002,
     borderColor: '#F3F3F3',
   },
   vegToggleContainer: {
@@ -489,7 +429,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeToggleItem: {
-    
+
   },
   activeToggleLabel: {
     fontWeight: '600',
@@ -499,7 +439,7 @@ const styles = StyleSheet.create({
     borderColor: '#0F9D58',
     backgroundColor: 'rgba(15, 157, 88, 0.1)',
     borderRadius: 16,
-    marginRight: 8, 
+    marginRight: 8,
   },
   nonVegToggle: {
     borderWidth: 1,
@@ -539,7 +479,7 @@ const styles = StyleSheet.create({
     gap: 11.82,
     borderColor: '#E0E0E0',
     backgroundColor: '#F5F5F5',
-    marginTop: 8, 
+    marginTop: 8,
   },
   toggleSwitch: {
     transform: [{ scale: 0.8 }],
@@ -551,7 +491,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16, 
+    marginTop: 16,
     marginBottom: 12,
   },
   cuisineTitle: {
@@ -582,35 +522,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E0E0E0',
   },
-  dishName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
-    marginTop: 12,
-    marginBottom: 4,
-    marginRight: 4,
-  },
-  dishNameIcon: {
-    marginRight: 8,
-  },
-  dishDescription: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  descriptionContainer: {
-    marginBottom: 4,
-  },
-  readMoreText: {
-    color: '#000000',
-    fontWeight: '500',
-  },
-  readMoreRight: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-  },
   ingredientsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -628,95 +539,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  ingredientsIconEllipse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'yellow',
-  },
-  ingredientsText: {
-    fontSize: 14,
-    color: '#FF8800',
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  ingredientIcon: {
-    marginRight: 4,
-  },
-  ingredientTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F8F8',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
-  ingredientText: {
-    fontSize: 11,
-    color: '#666666',
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  dishImageContainer: {
-    position: 'relative',
-    marginLeft: 12,
-    justifyContent: 'center',
-  },
   separator: {
     marginTop: 13,
     height: 1,
     backgroundColor: '#F0F0F0',
     marginLeft: 16,
     marginRight: 16,
-  },
-  dishImage: {
-    width: 120,
-    height: 110,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: '#F5F5F5',
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: -10,
-    marginTop: -10,
-    right: 17,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 83,
-    height: 28,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-  },
-  addButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#73AE78',
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 16,
-    marginRight: 2,
-  },
-  plusIcon: {
-    color: '#73AE78',
-    fontSize: 16,
-    fontWeight: 'bold',
-    lineHeight: 16,
-    marginTop: -1,
   },
   footer: {
     flexDirection: 'row',

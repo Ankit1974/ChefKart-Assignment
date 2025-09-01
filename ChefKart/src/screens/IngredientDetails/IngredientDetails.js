@@ -43,7 +43,6 @@ const IngredientDetails = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -54,21 +53,19 @@ const IngredientDetails = ({ route, navigation }) => {
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Ingredient Image */}
         <Image 
           source={{ uri: ingredient.image }} 
           style={styles.ingredientImage}
           resizeMode="cover"
         />
 
-        {/* Ingredient Info */}
         <View style={styles.infoContainer}>
           <Text style={styles.ingredientName}>{ingredient.name || 'Ingredient Name'}</Text>
           <Text style={styles.ingredientDescription}>
             {ingredient.description}
           </Text>
 
-          {/* Portion Selection */}
+          {/* Portion People */}
           <View style={styles.portionContainer}>
             <Text style={styles.sectionTitle}>Select People</Text>
             <View style={styles.portionOptions}>
@@ -139,12 +136,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    // Shadow for Android
     elevation: 3,
   },
   headerLeft: {
