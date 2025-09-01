@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const isSmallDevice = width < 375;
 
 const IngredientDetails = ({ route, navigation }) => {
   const { ingredient } = route.params || {};
@@ -131,8 +132,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 32,
+    padding: width * 0.04,
+    paddingTop: height * 0.04,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
@@ -148,20 +149,20 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: width * 0.1,
+    height: width * 0.1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: -8,
-    borderRadius: 20,
-    marginTop: 12,
+    marginLeft: -width * 0.02,
+    borderRadius: width * 0.05,
+    marginTop: height * 0.015,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: '700',
-    marginLeft: 25,
+    marginLeft: width * 0.06,
     color: '#333',
-    marginTop: 12,
+    marginTop: height * 0.015,
   },
   headerIcon: {
     padding: 8,
@@ -171,33 +172,33 @@ const styles = StyleSheet.create({
   },
   ingredientImage: {
     width: '100%',
-    height: width * 0.6,
-    marginTop: 20,
+    height: height * 0.3,
+    marginTop: height * 0.02,
   },
   infoContainer: {
-    padding: 16,
+    padding: width * 0.04,
   },
   ingredientInfo: {
     flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: '8%',
   },
   ingredientTitle: {
-    fontSize: 22,
+    fontSize: '6%',
     fontWeight: 'bold',
     flex: 1,
   },
   ingredientDescription: {
     color: '#666',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 24,
+    fontSize: '3.5%',
+    lineHeight: '2.5%',
+    marginBottom: '3%',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: height * 0.015,
   },
   portionContainer: {
     marginBottom: 24,
@@ -211,10 +212,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-    margin: 6,
-    minWidth: 87,
+    paddingVertical: height * 0.005,
+    paddingHorizontal: width * 0.01,
+    margin: width * 0.005,
+    minWidth: width * 0.22,
     alignItems: 'center',
   },
   selectedPortionButton: {
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 157, 88, 0.1)',
   },
   portionText: {
-    fontSize: 16,
+    fontSize: width * 0.04,
     color: '#333',
   },
   selectedPortionText: {
@@ -239,17 +240,20 @@ const styles = StyleSheet.create({
   ingredientItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: height * 0.01,
     borderBottomWidth: 1,
     borderBottomColor: '#f5f5f5',
   },
   ingredientName: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: '#333',
+    flex: 2,
   },
   ingredientQuantity: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: '#666',
+    flex: 1,
+    textAlign: 'right',
   },
 
   detailRow: {
